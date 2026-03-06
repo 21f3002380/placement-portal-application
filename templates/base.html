@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Placement Portal{% endblock %}</title>
+
+```
+<style>
+    body{
+        margin:0;
+        font-family: Arial, Helvetica, sans-serif;
+        background-color:#f5f7fb;
+    }
+
+    /* Navbar */
+
+    .navbar{
+        background:#1e3a8a;
+        padding:15px 30px;
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        color:white;
+    }
+
+    .navbar a{
+        color:white;
+        text-decoration:none;
+        margin-left:20px;
+        font-weight:500;
+    }
+
+    .navbar a:hover{
+        text-decoration:underline;
+    }
+
+    .container{
+        width:90%;
+        max-width:1100px;
+        margin:auto;
+        margin-top:40px;
+    }
+
+    /* Flash messages */
+
+    .flash{
+        padding:12px;
+        margin-bottom:20px;
+        border-radius:5px;
+        background:#ffe0e0;
+        color:#7a0000;
+    }
+
+    /* Card */
+
+    .card{
+        background:white;
+        padding:25px;
+        border-radius:8px;
+        box-shadow:0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    button{
+        padding:10px 18px;
+        border:none;
+        background:#1e3a8a;
+        color:white;
+        border-radius:5px;
+        cursor:pointer;
+    }
+
+    button:hover{
+        background:#162f6a;
+    }
+
+    input{
+        width:100%;
+        padding:10px;
+        margin-top:6px;
+        margin-bottom:15px;
+        border:1px solid #ccc;
+        border-radius:4px;
+    }
+
+    label{
+        font-weight:500;
+    }
+
+    footer{
+        margin-top:60px;
+        text-align:center;
+        padding:20px;
+        color:#777;
+        font-size:14px;
+    }
+
+</style>
+```
+
+</head>
+
+<body>
+
+```
+<!-- Navbar -->
+
+<div class="navbar">
+    <div>
+        <strong>Placement Portal</strong>
+    </div>
+
+    <div>
+        {% if session.get('user_id') %}
+            <a href="/">Home</a>
+            <a href="/logout">Logout</a>
+        {% else %}
+            <a href="/login">Login</a>
+        {% endif %}
+    </div>
+</div>
+
+
+<div class="container">
+
+    <!-- Flash Messages -->
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div class="flash">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+
+    {% block content %}
+    {% endblock %}
+
+</div>
+
+
+<footer>
+    Placement Portal System
+</footer>
+
+</body>
+</html>
