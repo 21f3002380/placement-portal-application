@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from datetime import datetime
+#rom app import app
 
 db = SQLAlchemy()
 
@@ -27,9 +28,11 @@ class Student(db.Model):
 
     name=db.Column(db.String(100),nullable=False)
     roll_number=db.Column(db.String(50),unique=True,nullable=False)
-    branch=db.Column(db.String(50))
+    department=db.Column(db.String(100))
     cgpa=db.Column(db.Float)
-    resume_link=db.Column(db.String(300))
+    skills=db.Column(db.Text)
+    resume_filename=db.Column(db.String(300))
+    is_blacklisted=db.Column(db.Boolean,default=False)
 
     applications=db.relationship("Application",backref="student",lazy=True)
 
@@ -42,7 +45,9 @@ class Company(db.Model):
     company_name=db.Column(db.String(120),nullable=False)
     description=db.Column(db.Text)
     website=db.Column(db.String(200))
+    hr_contact=db.Column(db.String(120))
     is_approved=db.Column(db.Boolean,default=False)
+    is_blacklisted=db.Column(db.Boolean,default=False)
 
     drives=db.relationship("PlacementDrive",backref="company",lazy=True)
 
@@ -54,11 +59,14 @@ class PlacementDrive(db.Model):
 
     title = db.Column(db.String(150),nullable=False)
     job_role=db.Column(db.String(120),nullable=False)
+    description=db.Column(db.Text)
     package=db.Column(db.Float)
     eligibility_cgpa=db.Column(db.Float)
+    eligibility_criteria=db.Column(db.Text)
+    application_deadline=db.Column(db.DateTime)
     drive_date=db.Column(db.DateTime)
     drive_status=db.Column(db.String(20),default="Open") #status of drive - Open/Closed
-    description=db.Column(db.Text)
+    approval_status=db.Column(db.String(20),default="Pending") #Approval status - Pending/Approved/Rejected
     created_at=db.Column(db.DateTime,default=datetime.utcnow)
 
     applications=db.relationship("Application",backref="drive",lazy=True)
@@ -82,13 +90,5 @@ class Application(db.Model):
     #student=db.relationship("Student",backref="applications")
     #drive=db.relationship("PlacementDrive",backref="applications")
 
-class PlacementStats(db.Model):
-    __tablename__="placement_stats"
-
-    id=db.Column(db.Integer,primary_key=True)
-    year=db.Column(db.Integer,unique=True)
-    total_students=db.Column(db.Integer)
-    students_placed=db.Column(db.Integer)
-    highest_package=db.Column(db.Float)
-    average_package=db.Column(db.Float)
-    companies_visited=db.Column(db.Integer)
+#ith app.app_context():
+   #db.create_all()

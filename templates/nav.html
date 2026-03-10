@@ -1,0 +1,34 @@
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/">Placement Portal</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            {% if current_user.role == 'admin' %}
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_companies') }}">Companies</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_students') }}">Students</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_drives') }}">Drives</a></li>
+            </ul>
+            {% elif current_user.role == 'company' %}
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('company_dashboard') }}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('company_drives') }}">My Drives</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('company_create_drive') }}">New Drive</a></li>
+            </ul>
+            {% elif current_user.role == 'student' %}
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('student_dashboard') }}">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('student_drives') }}">Browse Drives</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('student_applications') }}">My Applications</a></li>
+            </ul>
+            {% endif %}
+            <ul class="navbar-nav ms-3">
+                <li class="nav-item"><span class="nav-link text-muted"><i class="fa fa-user"></i> {{ current_user.email }}</span></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
