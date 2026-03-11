@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Create Drive{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">Create a Drive</h5>
+    <a href="{{ url_for('company_dashboard') }}" class="btn btn-sm btn-secondary">back</a>
+</div>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('company_create_drive') }}">
+                    <div class="mb-2"><label class="form-label">Drive Name</label>
+                        <input type="text" class="form-control form-control-sm" name="title" required value="{{ request.form.get('title', '') }}" /></div>
+                    <div class="mb-2"><label class="form-label">Job Title</label>
+                        <input type="text" class="form-control form-control-sm" name="job_role" required value="{{ request.form.get('job_role', '') }}" /></div>
+                    <div class="mb-2"><label class="form-label">Job Description</label>
+                        <textarea class="form-control form-control-sm" name="description" rows="3">{{ request.form.get('description', '') }}</textarea></div>
+                    <div class="mb-2"><label class="form-label">Eligibility Criteria</label>
+                        <input type="text" class="form-control form-control-sm" name="eligibility_criteria" value="{{ request.form.get('eligibility_criteria', '') }}" /></div>
+                    <div class="mb-2"><label class="form-label">Min CGPA</label>
+                        <input type="number" class="form-control form-control-sm" name="eligibility_cgpa" step="0.1" min="0" max="10" value="{{ request.form.get('eligibility_cgpa', '') }}" /></div>
+                    <div class="mb-2"><label class="form-label">Package (LPA)</label>
+                        <input type="number" class="form-control form-control-sm" name="package" step="0.1" min="0" value="{{ request.form.get('package', '') }}" /></div>
+                    <div class="mb-3"><label class="form-label">Application Deadline</label>
+                        <input type="date" class="form-control form-control-sm" name="application_deadline" value="{{ request.form.get('application_deadline', '') }}" /></div>
+                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

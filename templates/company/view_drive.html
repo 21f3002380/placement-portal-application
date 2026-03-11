@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}{{ drive.title }} — Applications{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">{{ drive.title }}</h5>
+    <a href="{{ url_for('company_dashboard') }}" class="btn btn-sm btn-secondary">back</a>
+</div>
+<div class="card mb-3">
+    <div class="card-body">
+        <p class="mb-1"><strong>Job Title:</strong> {{ drive.job_role }}</p>
+        <p class="mb-1"><strong>Package:</strong> {{ '%.1f LPA'|format(drive.package) if drive.package else '—' }}</p>
+        <p class="mb-1"><strong>Deadline:</strong> {{ drive.application_deadline.strftime('%d/%m/%Y') if drive.application_deadline else '—' }}</p>
+        <p class="mb-2"><strong>Status:</strong> <span class="badge-status badge-{{ drive.approval_status | lower }}">{{ drive.approval_status }}</span></p>
+        {% if drive.drive_status == 'Open' and drive.approval_status == 'Approved' %}
+        <form method="POST" action="{{ url_for('company_close_drive', drive_id=drive.id) }}" onsubmit="return confirm('Close this drive?')">
+            <button class="btn btn-sm btn-secondary">Close Drive</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+<div class="card">
+    <div class="card-header fw-bold">Received Applications</div>
+    <div class="card-body p-0">
+        <form method="POST" action="{{ url_for('company_save_statuses', drive_id=drive.id) }}">
+            <table class="table table-bordered table-sm mb-0">
+                <thead class="table-light"><tr><th>Sr No.</th><th>Student</th><th>Department</th><th>CGPA</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                    {% for application in drive.applications %}
+                    <tr>
+                        <td>{{ loop.index }}</td><td>{{ application.student.name }}</td>
+                        <td>{{ application.student.department or '—' }}</td>
+                        <td>{{ '%.2f'|format(application.student.cgpa) if application.student.cgpa else '—' }}</td>
+                        <td>
+                            {% if drive.approval_status == 'Approved' %}
+                            <select class="form-select form-select-sm" name="status_{{ application.id }}" style="width:140px;">
+                                {% for st in ['Applied', 'Shortlisted', 'Interview', 'Selected', 'Rejected'] %}
+                                <option value="{{ st }}" {% if application.application_status == st %}selected{% endif %}>{{ st }}</option>
+                                {% endfor %}
+                            </select>
+                            {% else %}
+                            <span class="badge-status badge-{{ application.application_status | lower }}">{{ application.application_status }}</span>
+                            {% endif %}
+                        </td>
+                        <td><a href="{{ url_for('company_view_application', app_id=application.id) }}" class="btn btn-sm btn-primary">review</a></td>
+                    </tr>
+                    {% else %}
+                    <tr><td colspan="6" class="text-center text-muted">No applications yet</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% if drive.approval_status == 'Approved' and drive.applications %}
+            <div class="p-2"><button type="submit" class="btn btn-sm btn-primary">Save Statuses</button></div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+{% endblock %}

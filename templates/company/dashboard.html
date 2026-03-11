@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Company Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">Welcome, {{ company.company_name }}</h5>
+    <a href="{{ url_for('company_create_drive') }}" class="btn btn-sm btn-primary">Create Drive</a>
+</div>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card text-center p-3"><div class="fs-4 fw-bold">{{ total_drives }}</div><div class="text-muted small">Drives</div></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><div class="fs-4 fw-bold">{{ total_applications }}</div><div class="text-muted small">Applications</div></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><div class="fs-4 fw-bold">{{ shortlisted }}</div><div class="text-muted small">Shortlisted</div></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><div class="fs-4 fw-bold">{{ selected }}</div><div class="text-muted small">Selected</div></div></div>
+</div>
+<div class="card mb-3">
+    <div class="card-header fw-bold">Upcoming Drives</div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light"><tr><th>Sr No.</th><th>Drive Name</th><th>Deadline</th><th>Applicants</th><th>Status</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for d in upcoming_drives %}
+                <tr>
+                    <td>{{ loop.index }}</td><td>{{ d.title }}</td>
+                    <td>{{ d.application_deadline.strftime('%d/%m/%Y') if d.application_deadline else '—' }}</td>
+                    <td>{{ d.applications | length }}</td>
+                    <td><span class="badge-status badge-{{ d.approval_status | lower }}">{{ d.approval_status }}</span></td>
+                    <td>
+                        <a href="{{ url_for('company_view_drive', drive_id=d.id) }}" class="btn btn-sm btn-primary">view details</a>
+                        {% if d.drive_status == 'Open' and d.approval_status == 'Approved' %}
+                        <form method="POST" action="{{ url_for('company_close_drive', drive_id=d.id) }}" class="d-inline" onsubmit="return confirm('Close this drive?')">
+                            <button class="btn btn-sm btn-secondary">mark as complete</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted">No upcoming drives</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="card mb-3">
+    <div class="card-header fw-bold">Closed Drives</div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light"><tr><th>Sr No.</th><th>Drive Name</th><th>Applicants</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for d in closed_drives %}
+                <tr>
+                    <td>{{ loop.index }}</td><td>{{ d.title }}</td>
+                    <td>{{ d.applications | length }}</td>
+                    <td><a href="{{ url_for('company_view_drive', drive_id=d.id) }}" class="btn btn-sm btn-primary">update</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted">No closed drives</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
