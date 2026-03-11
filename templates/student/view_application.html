@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Application Detail{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">Application Detail</h5>
+    <a href="{{ url_for('student_applications') }}" class="btn btn-sm btn-secondary">back</a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <p class="mb-1"><strong>Drive:</strong> {{ application.drive.title }}</p>
+        <p class="mb-1"><strong>Company:</strong> {{ application.drive.company.company_name }}</p>
+        <p class="mb-1"><strong>Job Title:</strong> {{ application.drive.job_role }}</p>
+        <p class="mb-1"><strong>Applied On:</strong> {{ application.applied_at.strftime('%d/%m/%Y') }}</p>
+        <p class="mb-1"><strong>Status:</strong> <span class="badge-status badge-{{ application.application_status | lower }}">{{ application.application_status }}</span></p>
+        <p class="mb-3"><strong>Remark:</strong> {{ application.remark or '—' }}</p>
+        <a href="{{ url_for('student_drives') }}" class="btn btn-sm btn-secondary">Browse More Drives</a>
+    </div>
+</div>
+{% endblock %}

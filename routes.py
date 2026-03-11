@@ -157,7 +157,6 @@ def admin_dashboard():
                            pending_drives=PlacementDrive.query.filter_by(approval_status='pending').all(),
                            recent_applications=Application.query.order_by(Application.applied_at.desc()).limit(10).all(),
                            )
-    return "wait for some time!!"
 
 @app.route('/admin/companies')
 @login_required
@@ -174,7 +173,7 @@ def admin_companies():
 @role_required('admin')
 def admin_view_company(company_id):
     company=Company.query.get_or_404(company_id)
-    return render_template('admin/viewcompany.html',company=company)
+    return render_template('admin/view_company.html',company=company)
 
 @app.route('/admin/companies/<int:company_id>/approve',methods=['POST'])
 @login_required
@@ -267,7 +266,7 @@ def admin_unblacklist_student(student_id):
 
 @app.route('/admin/drives')
 @login_required
-@role_required('Admin')
+@role_required('admin')
 def admin_drives():
     status = request.args.get('status', 'all')
     query  = PlacementDrive.query
@@ -280,7 +279,7 @@ def admin_drives():
 
 @app.route('/admin/drives/<int:drive_id>')
 @login_required
-@role_required('Admin')
+@role_required('admin')
 def admin_view_drive(drive_id):
     drive = PlacementDrive.query.get_or_404(drive_id)
     return render_template('admin/view_drive.html', drive=drive)
@@ -288,7 +287,7 @@ def admin_view_drive(drive_id):
 
 @app.route('/admin/drives/<int:drive_id>/approve', methods=['POST'])
 @login_required
-@role_required('Admin')
+@role_required('admin')
 def admin_approve_drive(drive_id):
     drive = PlacementDrive.query.get_or_404(drive_id)
     drive.approval_status = 'Approved'
@@ -298,7 +297,7 @@ def admin_approve_drive(drive_id):
 
 @app.route('/admin/drives/<int:drive_id>/reject', methods=['POST'])
 @login_required
-@role_required('Admin')
+@role_required('admin')
 def admin_reject_drive(drive_id):
     drive = PlacementDrive.query.get_or_404(drive_id)
     drive.approval_status = 'Rejected'
@@ -308,7 +307,7 @@ def admin_reject_drive(drive_id):
 
 @app.route('/admin/applications/<int:app_id>')
 @login_required
-@role_required('Admin')
+@role_required('admin')
 def admin_view_application(app_id):
     application = Application.query.get_or_404(app_id)
     return render_template('admin/view_application.html', application=application)
@@ -432,4 +431,135 @@ def company_update_application(app_id):
 @login_required
 @role_required('student')
 def student_dashboard():
-    return "wait for some time!!"
+    student = current_user.student
+    return render_template('student/dashboard.html',
+        student          = student,
+        applied_drives   = Application.query.filter_by(student_id=student.id).order_by(Application.applied_at.desc()).all(),
+        active_companies = Company.query.filter_by(is_approved=True, is_blacklisted=False).all(),
+    )
+
+@app.route('/student/drives')
+@login_required
+@role_required('student')
+def student_drives():
+    q     = request.args.get('q', '').strip()
+    query = PlacementDrive.query.filter_by(approval_status='Approved', drive_status='Open')
+    if q:
+        query = query.join(Company).filter(db.or_(
+            PlacementDrive.title.ilike(f'%{q}%'),
+            PlacementDrive.job_role.ilike(f'%{q}%'),
+            Company.company_name.ilike(f'%{q}%'),
+        ))
+    student           = current_user.student
+    applied_drive_ids = {a.drive_id for a in student.applications}
+    return render_template('student/drives.html',
+        drives            = query.order_by(PlacementDrive.created_at.desc()).all(),
+        applied_drive_ids = applied_drive_ids,
+    )
+
+@app.route('/student/drives/<int:drive_id>')
+@login_required
+@role_required('student')
+def student_view_drive(drive_id):
+    drive   = PlacementDrive.query.get_or_404(drive_id)
+    student = current_user.student
+    if drive.approval_status != 'Approved':
+        abort(404)
+    already_applied   = Application.query.filter_by(student_id=student.id, drive_id=drive_id).first() is not None
+    can_apply         = True
+    ineligible_reason = ''
+    if student.is_blacklisted:
+        can_apply = False
+        ineligible_reason = 'Your account has been blacklisted.'
+    elif drive.drive_status != 'Open':
+        can_apply = False
+        ineligible_reason = 'This drive is no longer accepting applications.'
+    elif drive.eligibility_cgpa and (student.cgpa or 0) < drive.eligibility_cgpa:
+        can_apply = False
+        ineligible_reason = f'This drive requires a minimum CGPA of {drive.eligibility_cgpa}.'
+    return render_template('student/view_drive.html',
+        drive=drive, already_applied=already_applied,
+        can_apply=can_apply, ineligible_reason=ineligible_reason,
+    )
+
+@app.route('/student/drives/<int:drive_id>/apply', methods=['POST'])
+@login_required
+@role_required('student')
+def student_apply(drive_id):
+    student = current_user.student
+    drive   = PlacementDrive.query.get_or_404(drive_id)
+    if drive.approval_status != 'Approved' or drive.drive_status != 'Open':
+        flash('This drive is not open for applications.')
+        return redirect(url_for('student_view_drive', drive_id=drive_id))
+    if student.is_blacklisted:
+        flash('Your account has been blacklisted.')
+        return redirect(url_for('student_view_drive', drive_id=drive_id))
+    if drive.eligibility_cgpa and (student.cgpa or 0) < drive.eligibility_cgpa:
+        flash('You do not meet the CGPA requirement.')
+        return redirect(url_for('student_view_drive', drive_id=drive_id))
+    if Application.query.filter_by(student_id=student.id, drive_id=drive_id).first():
+        flash('You have already applied for this drive.')
+        return redirect(url_for('student_view_drive', drive_id=drive_id))
+    db.session.add(Application(student_id=student.id, drive_id=drive_id))
+    db.session.commit()
+    flash(f'Success! Applied for {drive.title}.')
+    return redirect(url_for('student_applications'))
+
+@app.route('/student/applications')
+@login_required
+@role_required('student')
+def student_applications():
+    student = current_user.student
+    return render_template('student/applications.html',
+        student      = student,
+        applications = Application.query.filter_by(student_id=student.id).order_by(Application.applied_at.desc()).all(),
+    )
+
+@app.route('/student/applications/<int:app_id>')
+@login_required
+@role_required('student')
+def student_view_application(app_id):
+    application = Application.query.get_or_404(app_id)
+    if application.student_id != current_user.student.id:
+        abort(403)
+    return render_template('student/view_application.html', application=application)
+
+@app.route('/student/company/<int:company_id>')
+@login_required
+@role_required('student')
+def student_company_detail(company_id):
+    company = Company.query.get_or_404(company_id)
+    drives  = PlacementDrive.query.filter_by(company_id=company_id, approval_status='Approved', drive_status='Open').all()
+    return render_template('student/company_detail.html', company=company, drives=drives)
+
+@app.route('/student/profile/edit', methods=['GET', 'POST'])
+@login_required
+@role_required('student')
+def student_edit_profile():
+    student = current_user.student
+    if request.method == 'POST':
+        student.name       = request.form.get('name', '').strip()
+        student.department = request.form.get('department', '')
+        cgpa               = request.form.get('cgpa', '')
+        student.cgpa       = float(cgpa) if cgpa else None
+        student.skills     = request.form.get('skills', '').strip()
+        resume = request.files.get('resume')
+        if resume and file_allowed(resume.filename):
+            filename = secure_filename(f"{student.roll_number}.pdf")
+            os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)
+            resume.save(os.path.join(Config.UPLOAD_FOLDER, filename))
+            student.resume_filename = filename
+        db.session.commit()
+        flash('Success! Profile updated.')
+        return redirect(url_for('student_dashboard'))
+    return render_template('student/edit_profile.html', student=student)
+
+@app.route('/student/resume/<int:student_id>')
+@login_required
+def student_download_resume(student_id):
+    student = Student.query.get_or_404(student_id)
+    if current_user.role == 'student' and current_user.student.id != student_id:
+        abort(403)
+    if not student.resume_filename:
+        abort(404)
+    return send_from_directory(Config.UPLOAD_FOLDER, student.resume_filename, as_attachment=False)

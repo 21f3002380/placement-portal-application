@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}My Applications{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">Application History</h5>
+    <a href="{{ url_for('student_dashboard') }}" class="btn btn-sm btn-secondary">back</a>
+</div>
+<div class="card">
+    <div class="card-header">
+        Student Name: <strong>{{ student.name }}</strong> &nbsp;|&nbsp; Department: <strong>{{ student.department or '—' }}</strong>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light"><tr><th>Sr No.</th><th>Drive</th><th>Company</th><th>Job Title</th><th>Applied On</th><th>Status</th><th>Remark</th></tr></thead>
+            <tbody>
+                {% for app in applications %}
+                <tr>
+                    <td>{{ loop.index }}</td><td>{{ app.drive.title }}</td>
+                    <td>{{ app.drive.company.company_name }}</td><td>{{ app.drive.job_role }}</td>
+                    <td>{{ app.applied_at.strftime('%d/%m/%Y') }}</td>
+                    <td><span class="badge-status badge-{{ app.application_status | lower }}">{{ app.application_status }}</span></td>
+                    <td>{{ app.remark or '—' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted">No applications yet</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

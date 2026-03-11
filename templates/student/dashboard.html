@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Student Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">Welcome, {{ student.name }}</h5>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('student_edit_profile') }}" class="btn btn-sm btn-outline-secondary">Edit Profile</a>
+        <a href="{{ url_for('student_applications') }}" class="btn btn-sm btn-outline-secondary">History</a>
+    </div>
+</div>
+<div class="card mb-3">
+    <div class="card-header fw-bold">Organizations</div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <tbody>
+                {% for c in active_companies %}
+                <tr>
+                    <td>{{ c.company_name }}</td>
+                    <td class="text-end"><a href="{{ url_for('student_company_detail', company_id=c.id) }}" class="btn btn-sm btn-primary">view details</a></td>
+                </tr>
+                {% else %}
+                <tr><td class="text-center text-muted">No active companies</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div class="card mb-3">
+    <div class="card-header fw-bold">Applied Drives</div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light"><tr><th>Sr No.</th><th>Drive Name</th><th>Company</th><th>Applied On</th><th>Action</th></tr></thead>
+            <tbody>
+                {% for app in applied_drives %}
+                <tr>
+                    <td>{{ loop.index }}</td><td>{{ app.drive.title }}</td>
+                    <td>{{ app.drive.company.company_name }}</td>
+                    <td>{{ app.applied_at.strftime('%d/%m/%Y') }}</td>
+                    <td><a href="{{ url_for('student_view_application', app_id=app.id) }}" class="btn btn-sm btn-primary">view details</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center text-muted">No applications yet</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

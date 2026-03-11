@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Browse Drives{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">Current Drives</h5>
+    <form class="d-flex gap-2" method="GET">
+        <input type="text" class="form-control form-control-sm" name="q" placeholder="Search drives" value="{{ request.args.get('q', '') }}" />
+        <button class="btn btn-sm btn-primary">Search</button>
+    </form>
+</div>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light"><tr><th>Sr No.</th><th>Drive Name</th><th>Company</th><th>Job Role</th><th>Deadline</th><th>Action</th></tr></thead>
+            <tbody>
+                {% for d in drives %}
+                <tr>
+                    <td>{{ loop.index }}</td><td>{{ d.title }}</td>
+                    <td>{{ d.company.company_name }}</td><td>{{ d.job_role }}</td>
+                    <td>{{ d.application_deadline.strftime('%d/%m/%Y') if d.application_deadline else '—' }}</td>
+                    <td><a href="{{ url_for('student_view_drive', drive_id=d.id) }}" class="btn btn-sm btn-primary">view details</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted">No drives available</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

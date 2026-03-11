@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}My Drives — Company{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">My Placement Drives</h5>
+    <a href="{{ url_for('company_create_drive') }}" class="btn btn-sm btn-success">
+        + Create Drive
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Sr No.</th>
+                    <th>Drive Name</th>
+                    <th>Job Role</th>
+                    <th>Deadline</th>
+                    <th>Approval</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for d in drives %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+
+                    <td>{{ d.title }}</td>
+
+                    <td>{{ d.job_role }}</td>
+
+                    <td>
+                        {{ d.application_deadline.strftime('%d/%m/%Y') if d.application_deadline else '—' }}
+                    </td>
+
+                    <td>
+                        <span class="badge-status badge-{{ d.approval_status | lower }}">
+                            {{ d.approval_status }}
+                        </span>
+                    </td>
+
+                    <td>
+                        <span class="badge-status badge-{{ d.drive_status | lower }}">
+                            {{ d.drive_status }}
+                        </span>
+                    </td>
+
+                    <td>
+
+                        <a href="{{ url_for('company_view_drive', drive_id=d.id) }}"
+                           class="btn btn-sm btn-primary">
+                           View
+                        </a>
+
+                        {% if d.drive_status == 'Open' %}
+                        <form method="POST"
+                              action="{{ url_for('company_close_drive', drive_id=d.id) }}"
+                              class="d-inline">
+                            <button class="btn btn-sm btn-danger">
+                                Close
+                            </button>
+                        </form>
+                        {% endif %}
+
+                    </td>
+
+                </tr>
+
+                {% else %}
+
+                <tr>
+                    <td colspan="7" class="text-center text-muted">
+                        No drives created yet
+                    </td>
+                </tr>
+
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </div>
+</div>
+
+{% endblock %}

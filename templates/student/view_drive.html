@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}{{ drive.title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">{{ drive.title }}</h5>
+    <a href="{{ url_for('student_drives') }}" class="btn btn-sm btn-secondary">Go Back</a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <p class="mb-1"><strong>Job Title:</strong> {{ drive.job_role }}</p>
+        <p class="mb-1"><strong>Company:</strong> {{ drive.company.company_name }}</p>
+        <p class="mb-1"><strong>Description:</strong> {{ drive.description or '—' }}</p>
+        <p class="mb-1"><strong>Eligibility:</strong> {{ drive.eligibility_criteria or '—' }}</p>
+        <p class="mb-1"><strong>Min CGPA:</strong> {{ drive.eligibility_cgpa or '—' }}</p>
+        <p class="mb-1"><strong>Package:</strong> {{ '%.1f LPA'|format(drive.package) if drive.package else '—' }}</p>
+        <p class="mb-3"><strong>Deadline:</strong> {{ drive.application_deadline.strftime('%d/%m/%Y') if drive.application_deadline else '—' }}</p>
+        <hr />
+        {% if already_applied %}
+        <div class="alert alert-success p-2 small mb-0">You have already applied for this drive.</div>
+        {% elif not can_apply %}
+        <div class="alert alert-warning p-2 small mb-0">{{ ineligible_reason }}</div>
+        {% else %}
+        <form method="POST" action="{{ url_for('student_apply', drive_id=drive.id) }}" onsubmit="return confirm('Confirm application?')">
+            <button type="submit" class="btn btn-sm btn-primary">Apply</button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
