@@ -563,3 +563,28 @@ def student_download_resume(student_id):
     if not student.resume_filename:
         abort(404)
     return send_from_directory(Config.UPLOAD_FOLDER, student.resume_filename, as_attachment=False)
+
+@app.route('/admin/stats')
+@login_required
+@role_required('admin')
+def admin_stats():
+    from sqlalchemy import func
+    total_students  = Student.query.count()
+    placed_students = db.session.query(func.count(Application.student_id.distinct()))\
+                       .filter(Application.application_status == 'Selected').scalar()
+    drives_closed   = PlacementDrive.query.filter_by(drive_status='Closed').count()
+    drives_open     = PlacementDrive.query.filter_by(drive_status='Open', approval_status='Approved').count()
+    company_stats   = db.session.query(
+        Company.company_name,
+        func.count(Application.id).label('total'),
+        func.sum(db.case((Application.application_status == 'Selected', 1), else_=0)).label('selected')
+    ).join(PlacementDrive, PlacementDrive.company_id == Company.id)\
+     .join(Application, Application.drive_id == PlacementDrive.id)\
+     .group_by(Company.id).all()
+    return render_template('admin/stats.html',
+        total_students  = total_students,
+        placed_students = placed_students,
+        drives_closed   = drives_closed,
+        drives_open     = drives_open,
+        company_stats   = company_stats,
+    )

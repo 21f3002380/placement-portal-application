@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Placement Stats — Admin{% endblock %}
+{% block content %}
+<h5 class="fw-bold mb-3">Placement Tracking</h5>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card text-center p-3"><div class="fs-4 fw-bold">{{ total_students }}</div><div class="text-muted small">Total Students</div></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><div class="fs-4 fw-bold text-success">{{ placed_students }}</div><div class="text-muted small">Students Placed</div></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><div class="fs-4 fw-bold">{{ drives_open }}</div><div class="text-muted small">Active Drives</div></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><div class="fs-4 fw-bold">{{ drives_closed }}</div><div class="text-muted small">Closed Drives</div></div></div>
+</div>
+<div class="card">
+    <div class="card-header fw-bold">Company-wise Placement</div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light"><tr><th>Sr No.</th><th>Company</th><th>Total Applications</th><th>Selected</th></tr></thead>
+            <tbody>
+                {% for row in company_stats %}
+                <tr>
+                    <td>{{ loop.index }}</td><td>{{ row.company_name }}</td>
+                    <td>{{ row.total }}</td><td>{{ row.selected or 0 }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted">No data yet</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

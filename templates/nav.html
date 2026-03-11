@@ -11,6 +11,7 @@
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_companies') }}">Companies</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_students') }}">Students</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_drives') }}">Drives</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('admin_stats') }}">Stats</a></li>
             </ul>
             {% elif current_user.role == 'company' %}
             <ul class="navbar-nav ms-auto">
