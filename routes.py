@@ -148,7 +148,170 @@ def logout():
 @login_required
 @role_required('admin')
 def admin_dashboard():
+    return render_template('admin/dashboard.html',
+                           total_companies=Company.query.count(),
+                           total_students=Student.query.count(),
+                           total_drives=PlacementDrive.query.count(),
+                           total_applications=Application.query.count(),
+                           pending_companies=Company.query.filter_by(is_approved=False,is_blacklisted=False).all(),
+                           pending_drives=PlacementDrive.query.filter_by(approval_status='pending').all(),
+                           recent_applications=Application.query.order_by(Application.applied_at.desc()).limit(10).all(),
+                           )
     return "wait for some time!!"
+
+@app.route('/admin/companies')
+@login_required
+@role_required('admin')
+def admin_companies():
+    q=request.args.get('q','').strip()
+    query=Company.query
+    if q:
+        query=query.filter(Company.company_name.ilike(f'%{q}%'))
+    return render_template('admin/companies.html',companies=query.order_by(Company.id.desc()).all())
+
+@app.route('/admin/companies/<int:company_id>')
+@login_required
+@role_required('admin')
+def admin_view_company(company_id):
+    company=Company.query.get_or_404(company_id)
+    return render_template('admin/viewcompany.html',company=company)
+
+@app.route('/admin/companies/<int:company_id>/approve',methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_approve_company(company_id):
+    company=Company.query.get_or_404(company_id)
+    company.is_approved=True
+    db.session.commit()
+    flash(f'Success!{company.company_name} approved!')
+    return redirect(url_for('admin_companies'))
+    
+@app.route('/admin/companies/<int:company_id>/reject',methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_reject_company(company_id):
+    company=Company.query.get_or_404(company_id)
+    company.is_approved=False
+    company.user.is_active=False
+    db.session.commit()
+    flash(f'{company.company_name} rejected!')
+    return redirect(url_for('admin_companies'))
+
+@app.route('/admin/companies/<int:company_id>/blacklist',methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_blacklist_company(company_id):
+    company=Company.query.get_or_404(company_id)
+    company.is_blacklisted=True
+    company.user.is_active=False
+    for drive in company.drives:
+        drive.drive_status='Closed'
+        drive.approval_status='Rejected'
+    db.session.commit()
+    flash(f'{company.company_name} blacklisted!!')
+    return redirect(url_for('admin_companies'))
+
+@app.route('/admin/companies/<int:company_id>/unblacklist',methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_unblacklist_company(company_id):
+    company=Company.query.get_or_404(company_id)
+    company.is_blacklisted=False
+    company.user.is_active=True
+    db.session.commit()
+    flash(f'Success! {company.company_name} restored!!')
+    return redirect(url_for('admin_companies'))
+
+@app.route('/admin/students')
+@login_required
+@role_required('admin')
+def admin_students():
+    q=request.args.get('q','').strip()
+    query=Student.query.join(User)
+    if q:
+        query=query.filter(db.or_(
+            Student.name.ilike(f'%{q}%'),
+            Student.roll_number.ilike(f'%{q}%'),
+            User.email.ilike(f'%{q}%'),
+            ))
+    return render_template('admin/students.html',students=query.order_by(Student.id.desc()).all())
+
+@app.route('/admin/students/<int:student_id>')
+@login_required
+@role_required('admin')
+def admin_view_student(student_id):
+    student=Student.query.get_or_404(student_id)
+    return render_template('admin/view_student.html',student=student)
+
+@app.route('/admin/students/<int:student_id>/blacklist',methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_blacklist_student(student_id):
+    student=Student.query.get_or_404(student_id)
+    student.is_blacklisted=True
+    student.user.is_active=False
+    db.session.commit()
+    flash(f'{student.name} blacklisted!!')
+    return redirect(url_for('admin_students'))
+
+@app.route('/admin/students/<int:student_id>/unblacklist',methods=['POST'])
+@login_required
+@role_required('admin')
+def admin_unblacklist_student(student_id):
+    student=Student.query.get_or_404(student_id)
+    student.is_blacklisted=False
+    student.user.is_active=True
+    db.session.commit()
+    flash(f'Success! {student.name} restored!!')
+    return redirect(url_for('admin_students'))
+
+@app.route('/admin/drives')
+@login_required
+@role_required('Admin')
+def admin_drives():
+    status = request.args.get('status', 'all')
+    query  = PlacementDrive.query
+    if status != 'all':
+        query = query.filter_by(approval_status=status)
+    return render_template('admin/drives.html',
+        drives = query.order_by(PlacementDrive.id.desc()).all(),
+        filter = status,
+    )
+
+@app.route('/admin/drives/<int:drive_id>')
+@login_required
+@role_required('Admin')
+def admin_view_drive(drive_id):
+    drive = PlacementDrive.query.get_or_404(drive_id)
+    return render_template('admin/view_drive.html', drive=drive)
+
+
+@app.route('/admin/drives/<int:drive_id>/approve', methods=['POST'])
+@login_required
+@role_required('Admin')
+def admin_approve_drive(drive_id):
+    drive = PlacementDrive.query.get_or_404(drive_id)
+    drive.approval_status = 'Approved'
+    db.session.commit()
+    flash(f'Success! Drive "{drive.title}" approved.')
+    return redirect(url_for('admin_drives'))
+
+@app.route('/admin/drives/<int:drive_id>/reject', methods=['POST'])
+@login_required
+@role_required('Admin')
+def admin_reject_drive(drive_id):
+    drive = PlacementDrive.query.get_or_404(drive_id)
+    drive.approval_status = 'Rejected'
+    db.session.commit()
+    flash(f'Drive "{drive.title}" rejected.')
+    return redirect(url_for('admin_drives'))
+
+@app.route('/admin/applications/<int:app_id>')
+@login_required
+@role_required('Admin')
+def admin_view_application(app_id):
+    application = Application.query.get_or_404(app_id)
+    return render_template('admin/view_application.html', application=application)
 
 @app.route('/company/dashboard')
 @login_required

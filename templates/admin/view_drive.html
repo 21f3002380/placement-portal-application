@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{{ drive.title }} — Admin{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">{{ drive.title }}</h5>
+    <a href="{{ url_for('admin_drives') }}" class="btn btn-sm btn-secondary">back</a>
+</div>
+<div class="card mb-3">
+    <div class="card-body">
+        <p class="mb-1"><strong>Company:</strong> {{ drive.company.company_name }}</p>
+        <p class="mb-1"><strong>Job Role:</strong> {{ drive.job_role }}</p>
+        <p class="mb-1"><strong>Package:</strong> {{ '%.1f LPA'|format(drive.package) if drive.package else '—' }}</p>
+        <p class="mb-1"><strong>Description:</strong> {{ drive.description or '—' }}</p>
+        <p class="mb-1"><strong>Eligibility:</strong> {{ drive.eligibility_criteria or '—' }}</p>
+        <p class="mb-1"><strong>Min CGPA:</strong> {{ drive.eligibility_cgpa or '—' }}</p>
+        <p class="mb-1"><strong>Deadline:</strong> {{ drive.application_deadline.strftime('%d/%m/%Y') if drive.application_deadline else '—' }}</p>
+        <p class="mb-1"><strong>Drive Date:</strong> {{ drive.drive_date.strftime('%d/%m/%Y') if drive.drive_date else '—' }}</p>
+        <p class="mb-1"><strong>Approval:</strong> <span class="badge-status badge-{{ drive.approval_status | lower }}">{{ drive.approval_status }}</span></p>
+        <p class="mb-2"><strong>Drive Status:</strong> <span class="badge-status badge-{{ drive.drive_status | lower }}">{{ drive.drive_status }}</span></p>
+        {% if drive.approval_status == 'Pending' %}
+        <div class="d-flex gap-2">
+            <form method="POST" action="{{ url_for('admin_approve_drive', drive_id=drive.id) }}">
+                <button class="btn btn-sm btn-success">Approve Drive</button>
+            </form>
+            <form method="POST" action="{{ url_for('admin_reject_drive', drive_id=drive.id) }}">
+                <button class="btn btn-sm btn-danger">Reject Drive</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+<div class="card">
+    <div class="card-header fw-bold">Applications ({{ drive.applications | length }})</div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light"><tr><th>Sr No.</th><th>Student</th><th>Department</th><th>CGPA</th><th>Applied On</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for app in drive.applications %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ app.student.name }}</td>
+                    <td>{{ app.student.department or '—' }}</td>
+                    <td>{{ '%.2f'|format(app.student.cgpa) if app.student.cgpa else '—' }}</td>
+                    <td>{{ app.applied_at.strftime('%d/%m/%Y') }}</td>
+                    <td><span class="badge-status badge-{{ app.application_status | lower }}">{{ app.application_status }}</span></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted">No applications</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

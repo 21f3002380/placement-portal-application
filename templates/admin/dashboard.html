@@ -1,28 +1,96 @@
 {% extends "base.html" %}
-
 {% block title %}Admin Dashboard{% endblock %}
-
 {% block content %}
-
-<div class="card">
-
-```
-<h2>Admin Dashboard</h2>
-
-<p>Welcome Admin! You have successfully logged in.</p>
-
-<hr>
-
-<h3>Quick Test Links</h3>
-
-<ul>
-    <li><a href="#">View All Students</a></li>
-    <li><a href="#">View All Companies</a></li>
-    <li><a href="#">Approve Companies</a></li>
-    <li><a href="#">Placement Statistics</a></li>
-</ul>
-```
-
+<h5 class="fw-bold mb-3">Welcome, Admin</h5>
+<div class="row g-3 mb-4">
+    <div class="col-md-3"><div class="card text-center p-3"><div class="fs-4 fw-bold">{{ total_companies }}</div><div class="text-muted small">Companies</div></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><div class="fs-4 fw-bold">{{ total_students }}</div><div class="text-muted small">Students</div></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><div class="fs-4 fw-bold">{{ total_drives }}</div><div class="text-muted small">Drives</div></div></div>
+    <div class="col-md-3"><div class="card text-center p-3"><div class="fs-4 fw-bold">{{ total_applications }}</div><div class="text-muted small">Applications</div></div></div>
 </div>
 
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold">Registered Companies (Pending Approval)</span>
+        <a href="{{ url_for('admin_companies') }}" class="btn btn-sm btn-outline-secondary">View All</a>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light"><tr><th>Company</th><th>Email</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for c in pending_companies %}
+                <tr>
+                    <td>{{ c.company_name }}</td>
+                    <td>{{ c.user.email }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin_approve_company', company_id=c.id) }}" class="d-inline">
+                            <button class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin_reject_company', company_id=c.id) }}" class="d-inline">
+                            <button class="btn btn-sm btn-danger">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="3" class="text-center text-muted">No pending approvals</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold">Ongoing Drives (Pending Approval)</span>
+        <a href="{{ url_for('admin_drives') }}" class="btn btn-sm btn-outline-secondary">View All</a>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light"><tr><th>Sr No.</th><th>Drive Name</th><th>Company</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for d in pending_drives %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ d.title }}</td>
+                    <td>{{ d.company.company_name }}</td>
+                    <td>
+                        <a href="{{ url_for('admin_view_drive', drive_id=d.id) }}" class="btn btn-sm btn-primary">view details</a>
+                        <form method="POST" action="{{ url_for('admin_approve_drive', drive_id=d.id) }}" class="d-inline">
+                            <button class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin_reject_drive', drive_id=d.id) }}" class="d-inline">
+                            <button class="btn btn-sm btn-danger">Reject</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4" class="text-center text-muted">No pending drives</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-header fw-bold">Student Applications</div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light"><tr><th>Sr No.</th><th>Name</th><th>Drive</th><th>Company</th><th>Date</th><th>Action</th></tr></thead>
+            <tbody>
+                {% for app in recent_applications %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ app.student.name }}</td>
+                    <td>{{ app.drive.title }}</td>
+                    <td>{{ app.drive.company.company_name }}</td>
+                    <td>{{ app.applied_at.strftime('%d/%m/%Y') }}</td>
+                    <td><a href="{{ url_for('admin_view_application', app_id=app.id) }}" class="btn btn-sm btn-primary">view</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" class="text-center text-muted">No applications yet</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 {% endblock %}

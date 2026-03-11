@@ -14,13 +14,11 @@
                         <label class="form-label">Register as</label>
                         <div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="role" value="student" id="role_student"
-                                    {% if request.form.get('role', 'student') == 'student' %}checked{% endif %} />
+                                <input class="form-check-input" type="radio" name="role" value="student" id="role_student" checked />
                                 <label class="form-check-label" for="role_student">Student</label>
                             </div>
                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="role" value="company" id="role_company"
-                                    {% if request.form.get('role') == 'company' %}checked{% endif %} />
+                                <input class="form-check-input" type="radio" name="role" value="company" id="role_company" />
                                 <label class="form-check-label" for="role_company">Company</label>
                             </div>
                         </div>
@@ -36,62 +34,66 @@
                         <input type="password" class="form-control form-control-sm" name="password" required />
                     </div>
 
-                    {% if request.form.get('role') != 'company' %}
-                    <hr />
-                    <div class="mb-2">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" class="form-control form-control-sm" name="name"
-                               value="{{ request.form.get('name', '') }}" />
+                    <!-- Student Fields -->
+                    <div id="student_fields">
+                        <hr />
+                        <div class="mb-2">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" class="form-control form-control-sm" name="name"
+                                   value="{{ request.form.get('name', '') }}" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Roll Number</label>
+                            <input type="text" class="form-control form-control-sm" name="roll_number"
+                                   value="{{ request.form.get('roll_number', '') }}" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Department</label>
+                            <input type="text" class="form-control form-control-sm" name="department"
+                                   value="{{ request.form.get('department', '') }}" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">CGPA</label>
+                            <input type="number" class="form-control form-control-sm" name="cgpa"
+                                   step="0.01" min="0" max="10" value="{{ request.form.get('cgpa', '') }}" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Skills</label>
+                            <input type="text" class="form-control form-control-sm" name="skills"
+                                   placeholder="e.g. Python, SQL" value="{{ request.form.get('skills', '') }}" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Resume (PDF)</label>
+                            <input type="file" class="form-control form-control-sm" name="resume" accept=".pdf" />
+                        </div>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label">Roll Number</label>
-                        <input type="text" class="form-control form-control-sm" name="roll_number"
-                               value="{{ request.form.get('roll_number', '') }}" />
+
+                    <!-- Company Fields -->
+                    <div id="company_fields" style="display:none;">
+                        <hr />
+                        <div class="mb-2">
+                            <label class="form-label">Company Name</label>
+                            <input type="text" class="form-control form-control-sm" name="company_name"
+                                   value="{{ request.form.get('company_name', '') }}" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">HR Contact Email</label>
+                            <input type="email" class="form-control form-control-sm" name="hr_contact"
+                                   value="{{ request.form.get('hr_contact', '') }}" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">Website</label>
+                            <input type="url" class="form-control form-control-sm" name="website"
+                                   value="{{ request.form.get('website', '') }}" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control form-control-sm" name="description" rows="3">{{ request.form.get('description', '') }}</textarea>
+                        </div>
+                        <div class="alert alert-warning p-2 small mb-3">
+                            Company accounts require admin approval before login.
+                        </div>
                     </div>
-                    <div class="mb-2">
-                        <label class="form-label">Department</label>
-                        <input type="text" class="form-control form-control-sm" name="department"
-                               value="{{ request.form.get('department', '') }}" />
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">CGPA</label>
-                        <input type="number" class="form-control form-control-sm" name="cgpa"
-                               step="0.01" min="0" max="10" value="{{ request.form.get('cgpa', '') }}" />
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Skills</label>
-                        <input type="text" class="form-control form-control-sm" name="skills"
-                               placeholder="e.g. Python, SQL" value="{{ request.form.get('skills', '') }}" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Resume (PDF)</label>
-                        <input type="file" class="form-control form-control-sm" name="resume" accept=".pdf" />
-                    </div>
-                    {% else %}
-                    <hr />
-                    <div class="mb-2">
-                        <label class="form-label">Company Name</label>
-                        <input type="text" class="form-control form-control-sm" name="company_name"
-                               value="{{ request.form.get('company_name', '') }}" />
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">HR Contact Email</label>
-                        <input type="email" class="form-control form-control-sm" name="hr_contact"
-                               value="{{ request.form.get('hr_contact', '') }}" />
-                    </div>
-                    <div class="mb-2">
-                        <label class="form-label">Website</label>
-                        <input type="url" class="form-control form-control-sm" name="website"
-                               value="{{ request.form.get('website', '') }}" />
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Description</label>
-                        <textarea class="form-control form-control-sm" name="description" rows="3">{{ request.form.get('description', '') }}</textarea>
-                    </div>
-                    <div class="alert alert-warning p-2 small mb-3">
-                        Company accounts require admin approval before login.
-                    </div>
-                    {% endif %}
 
                     <button type="submit" class="btn btn-primary btn-sm w-100">Register</button>
                 </form>
@@ -102,4 +104,32 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    const radios = document.querySelectorAll('input[name="role"]');
+    const studentFields = document.getElementById('student_fields');
+    const companyFields = document.getElementById('company_fields');
+
+    radios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'company') {
+                studentFields.style.display = 'none';
+                companyFields.style.display = 'block';
+            } else {
+                studentFields.style.display = 'block';
+                companyFields.style.display = 'none';
+            }
+        });
+    });
+
+    // restore correct section after a failed form submission
+    const selectedRole = "{{ request.form.get('role', 'student') }}";
+    if (selectedRole === 'company') {
+        studentFields.style.display = 'none';
+        companyFields.style.display = 'block';
+        document.getElementById('role_company').checked = true;
+    }
+</script>
 {% endblock %}

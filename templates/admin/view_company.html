@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Application — Admin{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">Student Application</h5>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-sm btn-secondary">back</a>
+</div>
+<div class="card">
+    <div class="card-body">
+        <p class="mb-1"><strong>Student Name:</strong> {{ application.student.name }}</p>
+        <p class="mb-1"><strong>Department:</strong> {{ application.student.department or '—' }}</p>
+        <p class="mb-1"><strong>CGPA:</strong> {{ '%.2f'|format(application.student.cgpa) if application.student.cgpa else '—' }}</p>
+        <p class="mb-1"><strong>Drive:</strong> {{ application.drive.title }}</p>
+        <p class="mb-1"><strong>Job Title:</strong> {{ application.drive.job_role }}</p>
+        <p class="mb-1"><strong>Company:</strong> {{ application.drive.company.company_name }}</p>
+        <p class="mb-1"><strong>Applied On:</strong> {{ application.applied_at.strftime('%d/%m/%Y') }}</p>
+        <p class="mb-1"><strong>Status:</strong> <span class="badge-status badge-{{ application.application_status | lower }}">{{ application.application_status }}</span></p>
+        <p class="mb-2"><strong>Remark:</strong> {{ application.remark or '—' }}</p>
+        {% if application.student.resume_filename %}
+        <a href="{{ url_for('student_download_resume', student_id=application.student.id) }}"
+           class="btn btn-sm btn-outline-primary" target="_blank">View Resume</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

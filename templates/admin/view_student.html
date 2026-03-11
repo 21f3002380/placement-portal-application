@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ student.name }} — Admin{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">Student Application History</h5>
+    <a href="{{ url_for('admin_students') }}" class="btn btn-sm btn-secondary">back</a>
+</div>
+<div class="card mb-3">
+    <div class="card-body">
+        <p class="mb-1"><strong>Name:</strong> {{ student.name }}</p>
+        <p class="mb-1"><strong>Roll Number:</strong> {{ student.roll_number }}</p>
+        <p class="mb-1"><strong>Department:</strong> {{ student.department or '—' }}</p>
+        <p class="mb-1"><strong>CGPA:</strong> {{ '%.2f'|format(student.cgpa) if student.cgpa else '—' }}</p>
+        <p class="mb-1"><strong>Skills:</strong> {{ student.skills or '—' }}</p>
+        <p class="mb-2"><strong>Status:</strong>
+            {% if student.is_blacklisted %}<span class="badge-status badge-blacklisted">Blacklisted</span>
+            {% else %}<span class="badge-status badge-active">Active</span>{% endif %}
+        </p>
+        {% if student.resume_filename %}
+        <a href="{{ url_for('student_download_resume', student_id=student.id) }}"
+           class="btn btn-sm btn-outline-primary" target="_blank">View Resume</a>
+        {% endif %}
+    </div>
+</div>
+<div class="card mb-3">
+    <div class="card-header fw-bold">Application History</div>
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light"><tr><th>Sr No.</th><th>Drive</th><th>Company</th><th>Job Title</th><th>Applied On</th><th>Status</th><th>Remark</th></tr></thead>
+            <tbody>
+                {% for app in student.applications %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ app.drive.title }}</td>
+                    <td>{{ app.drive.company.company_name }}</td>
+                    <td>{{ app.drive.job_role }}</td>
+                    <td>{{ app.applied_at.strftime('%d/%m/%Y') }}</td>
+                    <td><span class="badge-status badge-{{ app.application_status | lower }}">{{ app.application_status }}</span></td>
+                    <td>{{ app.remark or '—' }}</td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted">No applications</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% if not student.is_blacklisted %}
+<form method="POST" action="{{ url_for('admin_blacklist_student', student_id=student.id) }}"
+      onsubmit="return confirm('Blacklist this student?')">
+    <button class="btn btn-sm btn-danger">Blacklist Student</button>
+</form>
+{% else %}
+<form method="POST" action="{{ url_for('admin_unblacklist_student', student_id=student.id) }}">
+    <button class="btn btn-sm btn-secondary">Restore Student</button>
+</form>
+{% endif %}
+{% endblock %}

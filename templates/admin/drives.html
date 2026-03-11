@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Drives — Admin{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h5 class="fw-bold mb-0">Placement Drives</h5>
+    <div class="d-flex gap-1">
+        <a href="?status=all"      class="btn btn-sm {% if filter == 'all'      %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+        <a href="?status=Pending"  class="btn btn-sm {% if filter == 'Pending'  %}btn-primary{% else %}btn-outline-secondary{% endif %}">Pending</a>
+        <a href="?status=Approved" class="btn btn-sm {% if filter == 'Approved' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Approved</a>
+        <a href="?status=Rejected" class="btn btn-sm {% if filter == 'Rejected' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Rejected</a>
+    </div>
+</div>
+<div class="card">
+    <div class="card-body p-0">
+        <table class="table table-bordered table-sm mb-0">
+            <thead class="table-light"><tr><th>Sr No.</th><th>Drive Name</th><th>Company</th><th>Job Role</th><th>Deadline</th><th>Approval</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for d in drives %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ d.title }}</td>
+                    <td>{{ d.company.company_name }}</td>
+                    <td>{{ d.job_role }}</td>
+                    <td>{{ d.application_deadline.strftime('%d/%m/%Y') if d.application_deadline else '—' }}</td>
+                    <td><span class="badge-status badge-{{ d.approval_status | lower }}">{{ d.approval_status }}</span></td>
+                    <td>
+                        <a href="{{ url_for('admin_view_drive', drive_id=d.id) }}" class="btn btn-sm btn-primary">view details</a>
+                        {% if d.approval_status == 'Pending' %}
+                        <form method="POST" action="{{ url_for('admin_approve_drive', drive_id=d.id) }}" class="d-inline">
+                            <button class="btn btn-sm btn-success">Approve</button>
+                        </form>
+                        <form method="POST" action="{{ url_for('admin_reject_drive', drive_id=d.id) }}" class="d-inline">
+                            <button class="btn btn-sm btn-danger">Reject</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" class="text-center text-muted">No drives found</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
