@@ -1,6 +1,7 @@
 import os
 from flask import render_template, request, redirect, url_for, send_from_directory, abort, flash
 from flask_login import login_user,logout_user,login_required,current_user
+from datetime import datetime
 from werkzeug.utils import secure_filename
 from functools import wraps
 from app import app,db,bcrypt
@@ -95,13 +96,26 @@ def register():
                 db.session.rollback()
                 flash('Roll number already registered!!')
                 return render_template('auth/register.html')
+
+            # --- validate CGPA ---
+            cgpa_raw = request.form.get('cgpa', '').strip()
+            cgpa = None
+            if cgpa_raw:
+                try:
+                    cgpa = float(cgpa_raw)
+                    if not (0 <= cgpa <= 10):
+                        raise ValueError
+                except ValueError:
+                    db.session.rollback()
+                    flash('Please enter a valid CGPA between 0 and 10.')
+                    return render_template('auth/register.html')
             
             student=Student(
                 user_id=user.id,
                 name=name,
                 roll_number=roll_number,
                 department=request.form.get('department',''),
-                cgpa=float(request.form.get('cgpa')) if request.form.get('cgpa') else None,
+                cgpa=cgpa,
                 skills=request.form.get('skills','').strip()
             )
             db.session.add(student)
@@ -154,7 +168,7 @@ def admin_dashboard():
                            total_drives=PlacementDrive.query.count(),
                            total_applications=Application.query.count(),
                            pending_companies=Company.query.filter_by(is_approved=False,is_blacklisted=False).all(),
-                           pending_drives=PlacementDrive.query.filter_by(approval_status='pending').all(),
+                           pending_drives=PlacementDrive.query.filter_by(approval_status='Pending').all(),
                            recent_applications=Application.query.order_by(Application.applied_at.desc()).limit(10).all(),
                            )
 
@@ -181,6 +195,7 @@ def admin_view_company(company_id):
 def admin_approve_company(company_id):
     company=Company.query.get_or_404(company_id)
     company.is_approved=True
+    company.user.is_active=True
     db.session.commit()
     flash(f'Success!{company.company_name} approved!')
     return redirect(url_for('admin_companies'))
@@ -348,18 +363,61 @@ def company_create_drive():
         if not title or not job_role:
             flash('Drive name and job role are required.')
             return render_template('company/create_drive.html')
-        deadline_str   = request.form.get('application_deadline', '')
-        drive_date_str = request.form.get('drive_date', '')
+
+        # --- validate package ---
+        package_raw = request.form.get('package', '').strip()
+        package = None
+        if package_raw:
+            try:
+                package = float(package_raw)
+                if package < 0:
+                    raise ValueError
+            except ValueError:
+                flash('Please enter a valid package (a positive number).')
+                return render_template('company/create_drive.html')
+
+        # --- validate eligibility_cgpa ---
+        cgpa_raw = request.form.get('eligibility_cgpa', '').strip()
+        eligibility_cgpa = None
+        if cgpa_raw:
+            try:
+                eligibility_cgpa = float(cgpa_raw)
+                if not (0 <= eligibility_cgpa <= 10):
+                    raise ValueError
+            except ValueError:
+                flash('Please enter a valid eligibility CGPA between 0 and 10.')
+                return render_template('company/create_drive.html')
+
+        # --- validate application_deadline ---
+        deadline_str = request.form.get('application_deadline', '').strip()
+        application_deadline = None
+        if deadline_str:
+            try:
+                application_deadline = datetime.strptime(deadline_str, '%Y-%m-%d')
+            except ValueError:
+                flash('Please enter a valid application deadline date.')
+                return render_template('company/create_drive.html')
+
+        # --- validate drive_date ---
+        drive_date_str = request.form.get('drive_date', '').strip()
+        drive_date = None
+        if drive_date_str:
+            try:
+                drive_date = datetime.strptime(drive_date_str, '%Y-%m-%d')
+            except ValueError:
+                flash('Please enter a valid drive date.')
+                return render_template('company/create_drive.html')
+
         drive = PlacementDrive(
             company_id           = company.id,
             title                = title,
             job_role             = job_role,
             description          = request.form.get('description', '').strip(),
-            package              = float(request.form.get('package')) if request.form.get('package') else None,
-            eligibility_cgpa     = float(request.form.get('eligibility_cgpa')) if request.form.get('eligibility_cgpa') else None,
+            package              = package,
+            eligibility_cgpa     = eligibility_cgpa,
             eligibility_criteria = request.form.get('eligibility_criteria', '').strip(),
-            application_deadline = datetime.strptime(deadline_str, '%Y-%m-%d') if deadline_str else None,
-            drive_date           = datetime.strptime(drive_date_str, '%Y-%m-%d') if drive_date_str else None,
+            application_deadline = application_deadline,
+            drive_date           = drive_date,
         )
         db.session.add(drive)
         db.session.commit()
@@ -461,6 +519,7 @@ def student_drives():
 @login_required
 @role_required('student')
 def student_view_drive(drive_id):
+    from datetime import datetime
     drive   = PlacementDrive.query.get_or_404(drive_id)
     student = current_user.student
     if drive.approval_status != 'Approved':
@@ -474,6 +533,9 @@ def student_view_drive(drive_id):
     elif drive.drive_status != 'Open':
         can_apply = False
         ineligible_reason = 'This drive is no longer accepting applications.'
+    elif drive.application_deadline and datetime.utcnow() > drive.application_deadline:
+        can_apply = False
+        ineligible_reason = 'The application deadline for this drive has passed.'
     elif drive.eligibility_cgpa and (student.cgpa or 0) < drive.eligibility_cgpa:
         can_apply = False
         ineligible_reason = f'This drive requires a minimum CGPA of {drive.eligibility_cgpa}.'
@@ -493,6 +555,9 @@ def student_apply(drive_id):
         return redirect(url_for('student_view_drive', drive_id=drive_id))
     if student.is_blacklisted:
         flash('Your account has been blacklisted.')
+        return redirect(url_for('student_view_drive', drive_id=drive_id))
+    if drive.application_deadline and datetime.utcnow() > drive.application_deadline:
+        flash('The application deadline for this drive has passed.')
         return redirect(url_for('student_view_drive', drive_id=drive_id))
     if drive.eligibility_cgpa and (student.cgpa or 0) < drive.eligibility_cgpa:
         flash('You do not meet the CGPA requirement.')
@@ -538,10 +603,21 @@ def student_company_detail(company_id):
 def student_edit_profile():
     student = current_user.student
     if request.method == 'POST':
+        # --- validate CGPA ---
+        cgpa_raw = request.form.get('cgpa', '').strip()
+        cgpa = None
+        if cgpa_raw:
+            try:
+                cgpa = float(cgpa_raw)
+                if not (0 <= cgpa <= 10):
+                    raise ValueError
+            except ValueError:
+                flash('Please enter a valid CGPA between 0 and 10.')
+                return render_template('student/edit_profile.html', student=student)
+
         student.name       = request.form.get('name', '').strip()
         student.department = request.form.get('department', '')
-        cgpa               = request.form.get('cgpa', '')
-        student.cgpa       = float(cgpa) if cgpa else None
+        student.cgpa       = cgpa
         student.skills     = request.form.get('skills', '').strip()
         resume = request.files.get('resume')
         if resume and file_allowed(resume.filename):
@@ -560,6 +636,12 @@ def student_download_resume(student_id):
     student = Student.query.get_or_404(student_id)
     if current_user.role == 'student' and current_user.student.id != student_id:
         abort(403)
+    if current_user.role == 'company':
+        applied = Application.query.join(PlacementDrive)\
+        .filter(Application.student_id == student_id,
+                PlacementDrive.company_id == current_user.company.id).first()
+        if not applied:
+            abort(403)
     if not student.resume_filename:
         abort(404)
     return send_from_directory(Config.UPLOAD_FOLDER, student.resume_filename, as_attachment=False)
